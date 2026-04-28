@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import {
   db,
   gamesTable,
@@ -19,6 +19,7 @@ import {
   toGameWithCreated,
 } from "../lib/serializers";
 import { sendPushToGame } from "../lib/push";
+import { isMissingRelationError } from "../lib/db-errors";
 
 const router: IRouter = Router();
 
@@ -60,7 +61,7 @@ router.get("/games", async (req, res, next) => {
       games = await db
         .select()
         .from(gamesTable)
-        .where(sql`${gamesTable.date} < ${today}`)
+        .where(lt(gamesTable.date, today))
         .orderBy(desc(gamesTable.date));
     } else {
       games = await db
@@ -77,6 +78,15 @@ router.get("/games", async (req, res, next) => {
       }),
     );
   } catch (err) {
+    if (isMissingRelationError(err)) {
+      res.status(503).json({
+        message:
+          "Database schema is not applied (tables missing). Run Drizzle push against this DATABASE_URL.",
+        next_step:
+          "GitHub Actions → Neon — schema push and seed, or: pnpm --filter @workspace/db run push && pnpm --filter @workspace/scripts run seed",
+      });
+      return;
+    }
     next(err);
   }
 });
