@@ -90,10 +90,10 @@ cd "e:\Other Projects\mini-football-app"
 & "$env:ProgramFiles\GitHub CLI\gh.exe" auth login
 ```
 
-3. Create the remote repo and push **`main`** (change the name if `mini-football-app` is taken):
+3. Create the remote repo **`el7arefa`** and push **`main`**:
 
 ```powershell
-& "$env:ProgramFiles\GitHub CLI\gh.exe" repo create mini-football-app --public --source=. --remote=origin --push
+& "$env:ProgramFiles\GitHub CLI\gh.exe" repo create el7arefa --public --source=. --remote=origin --push
 ```
 
 If **`origin` already exists**, use `git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git` then `git push -u origin main`.
