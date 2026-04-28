@@ -10,7 +10,7 @@ router.get("/healthz", (_req, res) => {
 });
 
 /** Checks Neon/DATABASE_URL and whether Drizzle schema was applied (games table). */
-router.get("/healthz/db", async (_req, res) => {
+router.get("/db-status", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
     const r = await pool.query<{ exists: boolean }>(`
