@@ -71,7 +71,7 @@ Default admin after seed: **`admin`** / **`football`** — change the password a
 ## 6. Troubleshooting
 
 - **`ERR_PNPM_NO_PKG_MANIFEST` / No package.json in `/opt/render/project/...`:** Render is building in the **wrong folder**. In the service **Settings → Root Directory**, set **`workspace`** exactly (where `pnpm-workspace.yaml` and `package.json` live). Leave it **empty** only if the repo root *is* the monorepo root with `package.json` at the top level — this repo is not structured that way. If you created a **Web Service** manually, set Root Directory yourself; **Blueprint** from `render.yaml` should apply **`rootDir: workspace`** automatically when that file is at the repo root.
-- **`DATABASE_URL`**: wrong host or missing `sslmode` → connection errors in Render logs.
+- **`ETIMEDOUT` from your PC to Neon (`drizzle push` / `seed`):** Outbound **TCP 5432** to Neon is blocked or unreliable on your network (firewall, ISP, VPN). Fixes: try another network (hotspot), relax Neon **IP allowlist**, allow outbound **5432**. **Workaround:** add GitHub repo secret **`DATABASE_URL`**, push code, then **Actions → Neon — schema push and seed → Run workflow** (see `.github/workflows/neon-db.yml`).
 - **Blank UI**: ensure the build ran **mini-football** before **api-server** (copy step packs UI into `dist/public`).
 - **502 after deploy**: check Logs → crash on startup (often DB URL). Hit `/api/healthz` after wake-up.
 

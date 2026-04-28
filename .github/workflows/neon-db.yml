@@ -1,0 +1,37 @@
+# Run when local Neon connections time out (firewall/ISP). Requires repo secret DATABASE_URL.
+name: Neon — schema push and seed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: workspace/pnpm-lock.yaml
+
+      - name: Install
+        working-directory: workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Drizzle push
+        working-directory: workspace
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @workspace/db run push
+
+      - name: Seed
+        working-directory: workspace
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm --filter @workspace/scripts run seed
