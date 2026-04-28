@@ -47,8 +47,13 @@ const publicDir =
 
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
-  app.get("*", (req, res, next) => {
+  // Express 5 / path-to-regexp v8 rejects app.get("*"); use middleware for SPA fallback.
+  app.use((req, res, next) => {
     if (req.method !== "GET") {
+      next();
+      return;
+    }
+    if (req.path.startsWith("/api")) {
       next();
       return;
     }
