@@ -43,8 +43,8 @@ async function getCounts(gameIds: string[]) {
   return map;
 }
 
-router.get("/games", (req, res) => {
-  void (async () => {
+router.get("/games", async (req, res, next) => {
+  try {
     const parsed = ListGamesQueryParams.safeParse(req.query);
     const status = parsed.success ? parsed.data.status : "upcoming";
     const today = new Date().toISOString().slice(0, 10);
@@ -76,7 +76,9 @@ router.get("/games", (req, res) => {
         return toGameSummary(g, c.approved, c.pending);
       }),
     );
-  })();
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post("/games", requireAdmin, (req, res) => {

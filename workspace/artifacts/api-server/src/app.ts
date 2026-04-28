@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import express, { type Express } from "express";
+import express, {
+  type Express,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -62,5 +67,15 @@ if (fs.existsSync(publicDir)) {
     });
   });
 }
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ err }, "Unhandled route error");
+  if (res.headersSent) return;
+  const msg =
+    process.env.NODE_ENV !== "production" && err instanceof Error
+      ? err.message
+      : "Internal server error";
+  res.status(500).json({ message: msg });
+});
 
 export default app;
