@@ -73,3 +73,29 @@ Default admin after seed: **`admin`** / **`football`** — change the password a
 - **`DATABASE_URL`**: wrong host or missing `sslmode` → connection errors in Render logs.
 - **Blank UI**: ensure the build ran **mini-football** before **api-server** (copy step packs UI into `dist/public`).
 - **502 after deploy**: check Logs → crash on startup (often DB URL). Hit `/api/healthz` after wake-up.
+
+## 7. Push code to GitHub (required before Render)
+
+Repo root is the folder that contains **`render.yaml`** (your path may differ).
+
+1. Open PowerShell there:
+
+```powershell
+cd "e:\Other Projects\mini-football-app"
+```
+
+2. Log in to GitHub once (browser or token — follow prompts):
+
+```powershell
+& "$env:ProgramFiles\GitHub CLI\gh.exe" auth login
+```
+
+3. Create the remote repo and push **`main`** (change the name if `mini-football-app` is taken):
+
+```powershell
+& "$env:ProgramFiles\GitHub CLI\gh.exe" repo create mini-football-app --public --source=. --remote=origin --push
+```
+
+If **`origin` already exists**, use `git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git` then `git push -u origin main`.
+
+4. **Render** → **New** → **Blueprint** → select this repo → **Root Directory** = **`workspace`** → set **`DATABASE_URL`** → deploy.
