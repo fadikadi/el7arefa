@@ -71,11 +71,15 @@ if (fs.existsSync(publicDir)) {
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err }, "Unhandled route error");
   if (res.headersSent) return;
+  const debug =
+    process.env.DEBUG_API_ERRORS === "true" && err instanceof Error;
   const msg =
     process.env.NODE_ENV !== "production" && err instanceof Error
       ? err.message
       : "Internal server error";
-  res.status(500).json({ message: msg });
+  const body: { message: string; detail?: string } = { message: msg };
+  if (debug) body.detail = err.message;
+  res.status(500).json(body);
 });
 
 export default app;
