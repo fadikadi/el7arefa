@@ -1,0 +1,22 @@
+# Render Blueprint — Neon (Postgres) + this repo as one Web Service.
+# Prerequisites: create a Neon database and copy its connection string (see workspace/DEPLOY.md).
+#
+# If your Git repository root is this folder (mini-football-app), keep rootDir as below.
+# If your repo root is only `workspace/`, remove the rootDir line or move this file into that repo root.
+
+services:
+  - type: web
+    name: mini-football
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: workspace
+    buildCommand: npm install -g pnpm@10 && pnpm install && pnpm --filter @workspace/mini-football run build && pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Paste from Neon (Dashboard → Connection string). Mark secret in the Render dashboard if not using Blueprint sync.
+      - key: DATABASE_URL
+        sync: false

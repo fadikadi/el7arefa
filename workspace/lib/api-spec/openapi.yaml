@@ -1,0 +1,1074 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Mini football game booking and player management platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Admin authentication
+  - name: games
+    description: Football games
+  - name: registrations
+    description: Player registrations
+  - name: players
+    description: Player roster management
+  - name: invites
+    description: Player invite links
+  - name: teams
+    description: Team splits and assignments
+  - name: notifications
+    description: Notifications to players
+  - name: stats
+    description: Dashboard summaries
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: adminLogin
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/logout:
+    post:
+      operationId: adminLogout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+  /auth/me:
+    get:
+      operationId: getAdminSession
+      tags: [auth]
+      summary: Get current admin session
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+
+  /games:
+    get:
+      operationId: listGames
+      tags: [games]
+      summary: List games
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [upcoming, past, all]
+            default: upcoming
+      responses:
+        "200":
+          description: A list of games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameSummary"
+    post:
+      operationId: createGame
+      tags: [games]
+      summary: Create a game (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGameBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+  /games/{gameId}:
+    get:
+      operationId: getGame
+      tags: [games]
+      summary: Get game details
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Game details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetail"
+    patch:
+      operationId: updateGame
+      tags: [games]
+      summary: Update a game (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGameBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+    delete:
+      operationId: cancelGame
+      tags: [games]
+      summary: Cancel a game (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /games/{gameId}/registrations:
+    get:
+      operationId: listRegistrations
+      tags: [registrations]
+      summary: List registrations for a game
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Registration"
+    post:
+      operationId: joinGame
+      tags: [registrations]
+      summary: Player joins a game
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinGameBody"
+      responses:
+        "201":
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationConfirmation"
+
+  /registrations/{registrationId}:
+    patch:
+      operationId: updateRegistrationStatus
+      tags: [registrations]
+      summary: Approve or reject a registration (admin)
+      parameters:
+        - $ref: "#/components/parameters/RegistrationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRegistrationStatusBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Registration"
+
+  /registrations/withdraw:
+    post:
+      operationId: withdrawRegistration
+      tags: [registrations]
+      summary: Player withdraws their own registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawBody"
+      responses:
+        "200":
+          description: Withdrawn
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Registration"
+
+  /registrations/me/attendance:
+    patch:
+      operationId: updateMyAttendance
+      tags: [registrations]
+      summary: Player updates their own attendance (confirmed/tentative)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAttendanceBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Registration"
+
+  /registrations/lookup:
+    get:
+      operationId: lookupRegistration
+      tags: [registrations]
+      summary: Look up a player's registration by token
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Found registration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationConfirmation"
+
+  /players:
+    get:
+      operationId: listPlayers
+      tags: [players]
+      summary: List all players in the roster (admin)
+      responses:
+        "200":
+          description: Players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Player"
+    post:
+      operationId: createPlayer
+      tags: [players]
+      summary: Add a player to the roster (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlayerBody"
+      responses:
+        "201":
+          description: Player created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+
+  /players/lookup:
+    get:
+      operationId: lookupPlayer
+      tags: [players]
+      summary: Look up a player by WhatsApp phone number
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Player found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "404":
+          description: Player not found
+
+  /players/{playerId}:
+    patch:
+      operationId: updatePlayer
+      tags: [players]
+      summary: Update a player's name or phone (admin)
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlayerBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+    delete:
+      operationId: deletePlayer
+      tags: [players]
+      summary: Remove a player from the roster (admin)
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /games/{gameId}/invites:
+    get:
+      operationId: listInvites
+      tags: [invites]
+      summary: List all invites for a game (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GameInvite"
+    post:
+      operationId: createInvite
+      tags: [invites]
+      summary: Create a player invite link for a game (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteBody"
+      responses:
+        "201":
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameInvite"
+
+  /invites/lookup:
+    get:
+      operationId: lookupInvite
+      tags: [invites]
+      summary: Look up an invite by token (player)
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invite info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteLookup"
+        "404":
+          description: Invite not found
+        "410":
+          description: Invite already used
+
+  /invites/{inviteId}:
+    delete:
+      operationId: deleteInvite
+      tags: [invites]
+      summary: Delete an invite (admin)
+      parameters:
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /games/{gameId}/teams:
+    get:
+      operationId: getTeams
+      tags: [teams]
+      summary: Get current team split
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Teams
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamSplit"
+    post:
+      operationId: splitTeams
+      tags: [teams]
+      summary: Auto-split approved players into teams (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SplitTeamsBody"
+      responses:
+        "200":
+          description: Teams created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamSplit"
+  /games/{gameId}/teams/assignments:
+    patch:
+      operationId: moveTeamPlayer
+      tags: [teams]
+      summary: Move a player between teams (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveTeamPlayerBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamSplit"
+
+  /games/{gameId}/notifications:
+    get:
+      operationId: listGameNotifications
+      tags: [notifications]
+      summary: List notifications sent for a game
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+    post:
+      operationId: sendGameNotification
+      tags: [notifications]
+      summary: Send a notification to players (admin)
+      parameters:
+        - $ref: "#/components/parameters/GameId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendNotificationBody"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Admin dashboard summary
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Recent activity feed for admin dashboard
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+components:
+  parameters:
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      schema:
+        type: string
+    RegistrationId:
+      name: registrationId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AdminLoginBody:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AdminSession:
+      type: object
+      required: [authenticated]
+      properties:
+        authenticated:
+          type: boolean
+        username:
+          type: string
+          nullable: true
+
+    GameStatus:
+      type: string
+      enum: [open, full, cancelled, completed]
+
+    RegistrationStatus:
+      type: string
+      enum: [pending, approved, rejected, withdrawn]
+
+    GameSummary:
+      type: object
+      required:
+        - id
+        - title
+        - date
+        - startTime
+        - endTime
+        - location
+        - slots
+        - approvedCount
+        - pendingCount
+        - status
+        - autoApprove
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        date:
+          type: string
+          description: ISO date (YYYY-MM-DD)
+        startTime:
+          type: string
+          description: HH:MM (24h)
+        endTime:
+          type: string
+          description: HH:MM (24h)
+        location:
+          type: string
+        slots:
+          type: integer
+        approvedCount:
+          type: integer
+        pendingCount:
+          type: integer
+        status:
+          $ref: "#/components/schemas/GameStatus"
+        notes:
+          type: string
+          nullable: true
+        autoApprove:
+          type: boolean
+
+    Game:
+      allOf:
+        - $ref: "#/components/schemas/GameSummary"
+        - type: object
+          properties:
+            createdAt:
+              type: string
+
+    GameDetail:
+      type: object
+      required:
+        - game
+        - approvedPlayers
+        - pendingCount
+      properties:
+        game:
+          $ref: "#/components/schemas/GameSummary"
+        approvedPlayers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPlayer"
+        pendingCount:
+          type: integer
+        teams:
+          $ref: "#/components/schemas/TeamSplit"
+          nullable: true
+
+    PublicPlayer:
+      type: object
+      required: [id, name, attendance]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        attendance:
+          $ref: "#/components/schemas/Attendance"
+
+    CreateGameBody:
+      type: object
+      required: [title, date, startTime, endTime, location, slots]
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        location:
+          type: string
+        slots:
+          type: integer
+          minimum: 2
+          maximum: 50
+        notes:
+          type: string
+          nullable: true
+
+    UpdateGameBody:
+      type: object
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        location:
+          type: string
+        slots:
+          type: integer
+          minimum: 2
+          maximum: 50
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/GameStatus"
+        autoApprove:
+          type: boolean
+
+    Player:
+      type: object
+      required: [id, name, phone, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+
+    CreatePlayerBody:
+      type: object
+      required: [name, phone]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          minLength: 1
+        notes:
+          type: string
+          nullable: true
+
+    UpdatePlayerBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          minLength: 1
+        notes:
+          type: string
+          nullable: true
+
+    JoinGameBody:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        attendance:
+          $ref: "#/components/schemas/Attendance"
+        inviteToken:
+          type: string
+          nullable: true
+        playerPhone:
+          type: string
+          nullable: true
+
+    GameInvite:
+      type: object
+      required: [id, gameId, name, token, used, createdAt]
+      properties:
+        id:
+          type: string
+        gameId:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        token:
+          type: string
+        used:
+          type: boolean
+        usedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+
+    CreateInviteBody:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        phone:
+          type: string
+          nullable: true
+
+    InviteLookup:
+      type: object
+      required: [id, gameId, gameTitle, gameDate, name, used]
+      properties:
+        id:
+          type: string
+        gameId:
+          type: string
+        gameTitle:
+          type: string
+        gameDate:
+          type: string
+        gameStartTime:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        used:
+          type: boolean
+
+    Attendance:
+      type: string
+      enum: [confirmed, tentative]
+
+    WithdrawBody:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    UpdateAttendanceBody:
+      type: object
+      required: [token, attendance]
+      properties:
+        token:
+          type: string
+        attendance:
+          $ref: "#/components/schemas/Attendance"
+
+    RegistrationConfirmation:
+      type: object
+      required: [registration, game, token]
+      properties:
+        registration:
+          $ref: "#/components/schemas/Registration"
+        game:
+          $ref: "#/components/schemas/GameSummary"
+        token:
+          type: string
+
+    Registration:
+      type: object
+      required: [id, gameId, name, status, attendance, createdAt]
+      properties:
+        id:
+          type: string
+        gameId:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/RegistrationStatus"
+        attendance:
+          $ref: "#/components/schemas/Attendance"
+        createdAt:
+          type: string
+        teamId:
+          type: string
+          nullable: true
+
+    UpdateRegistrationStatusBody:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/RegistrationStatus"
+
+    SplitTeamsBody:
+      type: object
+      required: [teamCount]
+      properties:
+        teamCount:
+          type: integer
+          enum: [2, 3]
+
+    MoveTeamPlayerBody:
+      type: object
+      required: [registrationId, teamId]
+      properties:
+        registrationId:
+          type: string
+        teamId:
+          type: string
+
+    Team:
+      type: object
+      required: [id, name, color, players]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicPlayer"
+
+    TeamSplit:
+      type: object
+      required: [gameId, teams]
+      properties:
+        gameId:
+          type: string
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/Team"
+
+    SendNotificationBody:
+      type: object
+      required: [message]
+      properties:
+        title:
+          type: string
+          nullable: true
+        message:
+          type: string
+          minLength: 1
+        audience:
+          type: string
+          enum: [all, approved, pending]
+          default: all
+
+    Notification:
+      type: object
+      required: [id, gameId, message, audience, createdAt, recipientCount]
+      properties:
+        id:
+          type: string
+        gameId:
+          type: string
+        title:
+          type: string
+          nullable: true
+        message:
+          type: string
+        audience:
+          type: string
+          enum: [all, approved, pending]
+        createdAt:
+          type: string
+        recipientCount:
+          type: integer
+
+    DashboardStats:
+      type: object
+      required:
+        - totalGames
+        - upcomingGames
+        - pendingApprovals
+        - approvedPlayersThisWeek
+        - nextGame
+      properties:
+        totalGames:
+          type: integer
+        upcomingGames:
+          type: integer
+        pendingApprovals:
+          type: integer
+        approvedPlayersThisWeek:
+          type: integer
+        nextGame:
+          $ref: "#/components/schemas/GameSummary"
+          nullable: true
+
+    ActivityItem:
+      type: object
+      required: [id, type, message, createdAt]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [registration, approval, rejection, game_created, game_updated, game_cancelled, teams_split, notification_sent]
+        message:
+          type: string
+        gameId:
+          type: string
+          nullable: true
+        gameTitle:
+          type: string
+          nullable: true
+        createdAt:
+          type: string

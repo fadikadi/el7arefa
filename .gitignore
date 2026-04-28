@@ -1,0 +1,5 @@
+# Root repo (mini-football-app + workspace/)
+workspace/.cache/
+.env
+.env.*
+!.env.example
