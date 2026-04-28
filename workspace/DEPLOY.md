@@ -76,6 +76,16 @@ Default admin after seed: **`admin`** / **`football`** — change the password a
 
 ## 7. Push code to GitHub (required before Render)
 
+**Shortcut:** from the repo root (folder with `render.yaml`), run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
+```
+
+(Log in when the browser opens; the script creates **`el7arefa`** and pushes **`main`**.)
+
+Or do it manually:
+
 Repo root is the folder that contains **`render.yaml`** (your path may differ).
 
 1. Open PowerShell there:
