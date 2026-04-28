@@ -11,6 +11,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import { dbStatusHandler } from "./routes/health";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -44,6 +45,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/api/db-status", dbStatusHandler);
 app.use("/api", router);
 
 const publicDir =

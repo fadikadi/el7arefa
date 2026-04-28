@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { HealthCheckResponse } from "@workspace/api-zod";
 import { pool } from "@workspace/db";
 
@@ -9,8 +9,8 @@ router.get("/healthz", (_req, res) => {
   res.json(data);
 });
 
-/** Checks Neon/DATABASE_URL and whether Drizzle schema was applied (games table). */
-router.get("/db-status", async (_req, res) => {
+/** Checks Neon/DATABASE_URL and whether Drizzle schema was applied (games table). Registered on `app` (see app.ts) so Express 5 nested routers cannot miss the path. */
+export async function dbStatusHandler(_req: Request, res: Response): Promise<void> {
   try {
     await pool.query("SELECT 1");
     const r = await pool.query<{ exists: boolean }>(`
@@ -37,6 +37,6 @@ router.get("/db-status", async (_req, res) => {
         "Fix DATABASE_URL on Render (Neon URI). Redeploy after saving Environment.",
     });
   }
-});
+}
 
 export default router;
